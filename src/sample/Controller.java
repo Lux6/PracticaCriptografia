@@ -4,6 +4,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
+import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 
@@ -18,14 +19,18 @@ import java.util.ResourceBundle;
 
 public class Controller implements Initializable {
 
-    @FXML private TextArea taEncriptar;
-    @FXML private TextArea taEncriptat;
-    @FXML private TextArea taDesencriptar;
+    @FXML private TextArea taEncriptar; //Text Base
+    @FXML private TextArea taEncriptat; //Text Encriptat
+    @FXML private TextArea taDesencriptar; //Text Desencriptat
+    @FXML private PasswordField pfContrasenya; //Constrasenya
+    @FXML private TextField tfRuta; //Ruta Arxiu Text Encriptat
+    @FXML private TextField tfRutaSave; //Ruta Guardar Arxiu
     @FXML private Button btnEncriptar;
-    @FXML private TextField tfContrasenya;
     @FXML private Button btnDesencriptar;
 
     private String strEncriptar;
+    private String strRutaEncrypt;
+    private String strRutaSave;
     private char[] strKey;
 
     private KeyStore keyStore;
@@ -34,6 +39,7 @@ public class Controller implements Initializable {
     @FXML
     public void btnEncriptar(ActionEvent actionEvent ) {
         strEncriptar = taEncriptar.getText().toString();
+        strRutaSave = tfRutaSave.getText().toString();
 
         try {
             cipher = Cipher.getInstance("RSA");
@@ -52,7 +58,7 @@ public class Controller implements Initializable {
             taEncriptat.setText( new String (encriptedText ) );
 
             //Desa els Bytes encryptats a un document
-            FileOutputStream fos = new FileOutputStream("./encrypt.txt");
+            FileOutputStream fos = new FileOutputStream(strRutaSave);
             fos.write( encriptedText );
 
             //System.out.println( "Bytes: " + Arrays.toString(Files.readAllBytes(new File("./encrypt.txt").toPath()) ));
@@ -71,7 +77,8 @@ public class Controller implements Initializable {
 
     @FXML
     public void btnDesencriptar( ActionEvent actionEvent ) {
-        strKey = tfContrasenya.getText().toCharArray();
+        strKey = pfContrasenya.getText().toCharArray();
+        strRutaEncrypt = tfRuta.getText().toString();
 
         try {
             /** DESECRIPTAR **/
@@ -80,20 +87,25 @@ public class Controller implements Initializable {
 
             cipher.init(Cipher.DECRYPT_MODE, pkey);
             byte[] decodedText = new byte[50];
-            decodedText = cipher.doFinal(Files.readAllBytes(new File("./encrypt.txt").toPath()) );
+            decodedText = cipher.doFinal(Files.readAllBytes(new File(strRutaEncrypt).toPath()) );
 
+            //Mostra Text Desencriptat
             taDesencriptar.setText( new String( decodedText ) );
         } catch ( Exception e ) {
-            System.out.println(
-                    "Decrypt\n"
-                            + e.getMessage()
-            );
+            //Mostra l'error
+            taDesencriptar.setText( e.getMessage() );
         }
     }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         try {
+
+            //Deshabilita l'edició als TextArea
+            taEncriptat.setEditable( false );
+            taDesencriptar.setEditable( false );
+
+            //Crea la KeyStore
             keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
             char[] pswd = "passwd".toCharArray();
             keyStore.load( null , pswd );
